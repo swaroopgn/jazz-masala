@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jazz Masala — Six AI Songs Pressed on One MacBook</title>
+<meta name="description" content="Original AI-generated music composed locally with ACE-Step 1.5 on an Apple M5, published to Spotify with save-to-spotify. The full setup, measured numbers, and pipeline — for PMs and ML engineers.">
+<meta property="og:title" content="Jazz Masala — Six AI Songs Pressed on One MacBook">
+<meta property="og:description" content="Local music generation with ACE-Step 1.5 + the save-to-spotify publishing flow, with real measured numbers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FAF4E8;
+  --paper-deep:#F2E8D5;
+  --ink:#1C1611;
+  --ink-soft:#4A3F33;
+  --marigold:#D9821F;
+  --marigold-deep:#B5650D;
+  --oxblood:#7A2E2E;
+  --teal:#2E6E6A;
+  --violet:#5B4B8A;
+  --leaf:#4C6B3C;
+  --rose:#C2356F;
+  --hairline:rgba(28,22,17,.18);
+  --mono:'Spline Sans Mono',ui-monospace,monospace;
+  --serif:'Fraunces',Georgia,serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--serif);
+  font-size:17px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+/* paper grain */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:5;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+a{color:var(--marigold-deep)}
+::selection{background:var(--marigold);color:var(--paper)}
+
+.wrap{max-width:1100px;margin:0 auto;padding:0 28px}
+
+/* ---------- masthead ---------- */
+header{
+  border-bottom:3px double var(--ink);
+  position:relative;overflow:hidden;
+}
+.mast-top{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 0;border-bottom:1px solid var(--hairline);
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+}
+.mast-top .dot{color:var(--marigold)}
+nav{display:flex;gap:22px;flex-wrap:wrap}
+nav a{color:var(--ink);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px}
+nav a:hover{border-color:var(--marigold)}
+.hero{padding:72px 0 64px;position:relative}
+.hero h1{
+  font-size:clamp(52px,9vw,118px);
+  font-weight:850;line-height:.95;letter-spacing:-.025em;
+  font-variation-settings:"opsz" 144;
+  max-width:14ch;
+}
+.hero h1 em{font-style:italic;font-weight:480;color:var(--marigold-deep)}
+.hero .deck{
+  margin-top:28px;max-width:58ch;font-size:20px;line-height:1.55;color:var(--ink-soft);
+}
+.hero .deck strong{color:var(--ink)}
+.kicker{
+  font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--marigold-deep);margin-bottom:22px;display:flex;align-items:center;gap:12px;
+}
+.kicker::before{content:"";width:34px;height:1px;background:var(--marigold-deep)}
+/* big rotating ornament disc */
+.hero-disc{
+  position:absolute;right:-180px;top:30px;width:480px;height:480px;border-radius:50%;
+  background:
+    radial-gradient(circle at center, var(--marigold) 0 17%, transparent 17.5% 18.5%, transparent 0),
+    repeating-radial-gradient(circle at center, #241c14 0 2.5px, #322619 2.5px 5px);
+  box-shadow:0 24px 80px rgba(28,22,17,.28);
+  animation:spin 26s linear infinite;opacity:.92;
+}
+.hero-disc::after{
+  content:"";position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 130deg, rgba(250,244,232,.22), transparent 22%, transparent 78%, rgba(250,244,232,.14));
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:900px){.hero-disc{width:300px;height:300px;right:-130px;top:auto;bottom:-90px}}
+
+.facts{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  border-top:1px solid var(--hairline);
+}
+.fact{padding:18px 18px 18px 0;border-right:1px solid var(--hairline);font-family:var(--mono)}
+.fact:last-child{border-right:none}
+.fact b{display:block;font-size:26px;font-weight:600;color:var(--ink)}
+.fact span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+
+/* ---------- section scaffolding ---------- */
+section{padding:84px 0 30px}
+.sec-head{display:flex;align-items:baseline;gap:18px;margin-bottom:14px}
+.sec-num{font-family:var(--mono);font-size:13px;color:var(--marigold-deep);letter-spacing:.1em}
+h2{font-size:clamp(34px,4.6vw,54px);font-weight:760;letter-spacing:-.02em;line-height:1.04}
+.sec-sub{max-width:64ch;color:var(--ink-soft);font-size:18px;margin-bottom:42px}
+
+/* ---------- records ---------- */
+.records{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:26px}
+.record{
+  border:1px solid var(--hairline);background:var(--paper-deep);
+  padding:26px;position:relative;display:flex;flex-direction:column;gap:18px;
+  transition:transform .25s ease, box-shadow .25s ease;
+}
+.record:hover{transform:translateY(-4px);box-shadow:0 18px 44px rgba(28,22,17,.14)}
+.rec-top{display:flex;gap:20px;align-items:center}
+.disc-wrap{position:relative;width:120px;height:120px;flex:none;border-radius:50%}
+.disc-ring{
+  position:absolute;inset:-6px;border-radius:50%;
+  background:conic-gradient(var(--marigold) calc(var(--p,0)*1%), rgba(28,22,17,.12) 0);
+  -webkit-mask:radial-gradient(circle, transparent 0 56%, #000 57%);
+          mask:radial-gradient(circle, transparent 0 56%, #000 57%);
+}
+.disc{
+  position:absolute;inset:0;border-radius:50%;cursor:pointer;border:none;
+  background:
+    radial-gradient(circle at center, var(--label) 0 30%, transparent 30.5% 31.5%, transparent 0),
+    repeating-radial-gradient(circle at center, #241c14 0 2px, #34281a 2px 4px);
+  box-shadow:0 8px 22px rgba(28,22,17,.3), inset 0 0 0 1px rgba(250,244,232,.08);
+  animation:spin 3.2s linear infinite;animation-play-state:paused;
+}
+.record.playing .disc{animation-play-state:running}
+.disc::after{ /* spindle */
+  content:"";position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;
+  transform:translate(-50%,-50%);background:var(--paper);box-shadow:0 0 0 1px rgba(28,22,17,.4);
+}
+.play-glyph{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:34px;height:34px;border-radius:50%;background:rgba(250,244,232,.93);
+  display:grid;place-items:center;pointer-events:none;
+  font-size:13px;color:var(--ink);box-shadow:0 2px 8px rgba(28,22,17,.35);
+  transition:opacity .2s;
+}
+.record.playing .play-glyph{opacity:0}
+.disc-wrap:hover .play-glyph{opacity:1}
+.rec-meta h3{font-size:23px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.rec-meta .style{font-style:italic;color:var(--ink-soft);font-size:15px;margin-top:6px;line-height:1.4}
+.rec-tags{display:flex;flex-wrap:wrap;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em}
+.rec-tags span{border:1px solid var(--hairline);padding:3px 9px;border-radius:99px;color:var(--ink-soft)}
+.rec-tags .gen{border-color:var(--marigold);color:var(--marigold-deep)}
+.rec-time{
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:12px;color:var(--ink-soft);
+  border-top:1px solid var(--hairline);padding-top:12px;
+}
+.lyric-note{font-size:13.5px;font-style:italic;color:var(--ink-soft);line-height:1.5}
+
+/* ---------- model section ---------- */
+.split{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:start}
+@media(max-width:880px){.split{grid-template-columns:1fr}}
+.prose p{margin-bottom:18px;max-width:62ch}
+.prose p b{font-weight:700}
+.prose .lede::first-letter{
+  font-size:64px;float:left;line-height:.84;padding:6px 10px 0 0;font-weight:850;color:var(--marigold-deep);
+}
+.flow{counter-reset:step;border-left:2px solid var(--ink);margin:8px 0 26px}
+.flow li{list-style:none;position:relative;padding:0 0 26px 34px}
+.flow li::before{
+  counter-increment:step;content:counter(step,decimal-leading-zero);
+  position:absolute;left:-2px;top:2px;transform:translateX(-50%);
+  font-family:var(--mono);font-size:11px;background:var(--ink);color:var(--paper);
+  padding:3px 7px;border-radius:99px;
+}
+.flow b{display:block;font-size:18px;margin-bottom:4px}
+.flow p{color:var(--ink-soft);font-size:15.5px;max-width:52ch}
+.flow code{font-family:var(--mono);font-size:13px;background:var(--paper-deep);padding:1px 6px;border:1px solid var(--hairline)}
+
+.session-log{
+  background:var(--ink);color:#EDE3CF;border-radius:4px;padding:26px 26px 20px;
+  font-family:var(--mono);font-size:13px;line-height:1.75;
+  box-shadow:0 20px 50px rgba(28,22,17,.25);position:sticky;top:24px;
+}
+.session-log .t{color:var(--marigold);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px;display:block}
+.session-log table{width:100%;border-collapse:collapse}
+.session-log td{padding:7px 0;border-bottom:1px solid rgba(237,227,207,.14);vertical-align:top}
+.session-log td:last-child{text-align:right;color:#fff;font-weight:500}
+.session-log .dim{color:rgba(237,227,207,.6)}
+.session-log .ok{color:#8FC97E}
+
+pre.code{
+  background:var(--ink);color:#EDE3CF;font-family:var(--mono);font-size:13px;line-height:1.7;
+  padding:22px 24px;border-radius:4px;overflow-x:auto;margin:18px 0 26px;
+  box-shadow:0 14px 36px rgba(28,22,17,.2);
+}
+pre.code .c{color:rgba(237,227,207,.45)}
+pre.code .y{color:var(--marigold)}
+pre.code .g{color:#8FC97E}
+
+/* ---------- PM cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--hairline);border:1px solid var(--hairline)}
+.card{background:var(--paper);padding:30px 26px}
+.card .label{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--marigold-deep);margin-bottom:14px}
+.card h3{font-size:24px;font-weight:760;letter-spacing:-.01em;margin-bottom:10px;line-height:1.15}
+.card p{font-size:15px;color:var(--ink-soft)}
+
+/* ---------- field notes ---------- */
+.notes li{
+  list-style:none;border-top:1px solid var(--hairline);padding:20px 0;
+  display:grid;grid-template-columns:170px 1fr;gap:20px;
+}
+@media(max-width:700px){.notes li{grid-template-columns:1fr;gap:6px}}
+.notes .tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--oxblood);padding-top:4px}
+.notes p{color:var(--ink-soft);font-size:15.5px;max-width:68ch}
+.notes b{color:var(--ink)}
+
+footer{
+  margin-top:90px;border-top:3px double var(--ink);padding:34px 0 60px;
+  font-family:var(--mono);font-size:12px;color:var(--ink-soft);
+  display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;
+}
+footer a{color:var(--ink)}
+
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="mast-top">
+      <div>JAZZ MASALA <span class="dot">●</span> THE LOCAL SESSIONS</div>
+      <nav>
+        <a href="#records">The Records</a>
+        <a href="#model">The Model</a>
+        <a href="#pipeline">The Pipeline</a>
+        <a href="#pm">For PMs</a>
+        <a href="#notes">Field Notes</a>
+      </nav>
+    </div>
+    <div class="hero">
+      <div class="hero-disc" aria-hidden="true"></div>
+      <div class="kicker">Session notes · June 2026 · Recorded nowhere near a studio</div>
+      <h1>Six songs, pressed on <em>one laptop.</em></h1>
+      <p class="deck">
+        Every track below was composed by <strong>ACE-Step 1.5</strong> — an open-source music
+        foundation model — running entirely on an <strong>Apple M5 MacBook</strong>, then published
+        to a personal Spotify library with Spotify's <strong>save-to-spotify</strong> CLI.
+        No cloud GPUs, no API fees, no licensing of anyone else's melodies. This page documents
+        the songs, the architecture, and the publishing flow — with real numbers from the actual session.
+      </p>
+    </div>
+    <div class="facts">
+      <div class="fact"><b>6</b><span>original songs</span></div>
+      <div class="fact"><b>3 min</b><span>per track, warm</span></div>
+      <div class="fact"><b>$0</b><span>marginal cost</span></div>
+      <div class="fact"><b>9.4 GB</b><span>model weights</span></div>
+      <div class="fact"><b>3</b><span>languages sung</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ================= RECORDS ================= -->
+<section id="records">
+  <div class="sec-head"><span class="sec-num">№ 01</span><h2>The records</h2></div>
+  <p class="sec-sub">Tap a disc to play. All compositions and lyrics are original — written fresh for these sessions, in the <em>style</em> of the genres they tip their hat to. Generation time is the actual wall-clock time on the M5.</p>
+
+  <div class="records">
+    <article class="record reveal" data-src="audio/monsoon-serenade.mp3" style="--label:var(--teal)">
+      <div class="rec-top">
+        <div class="disc-wrap"><div class="disc-ring"></div><button class="disc" aria-label="Play Monsoon Serenade"></button><div class="play-glyph">▶</div></div>
+        <div class="rec-meta"><h3>Monsoon Serenade</h3><p class="style">Smooth jazz · bansuri lead over Rhodes, brushed kit &amp; tabla</p></div>
+      </div>
+      <div class="rec-tags"><span>instrumental</span><span>72 bpm</span><span>D major</span><span class="gen">gen 7m 04s · cold start</span></div>
+      <div class="rec-time"><span class="cur">0:00</span><span class="dur">3:00</span></div>
+    </article>
+
+    <article class="record reveal" data-src="audio/sitar-over-saxophone.mp3" style="--label:var(--oxblood)">
+      <div class="rec-top">
+        <div class="disc-wrap"><div class="disc-ring"></div><button class="disc" aria-label="Play Sitar Over Saxophone"></button><div class="play-glyph">▶</div></div>
+        <div class="rec-meta"><h3>Sitar Over Saxophone</h3><p class="style">Jazz quartet · tenor sax in call-and-response with sitar</p></div>
+      </div>
+      <div class="rec-tags"><span>instrumental</span><span>84 bpm</span><span>F major</span><span class="gen">gen 3m 06s</span></div>
+      <div class="rec-time"><span class="cur">0:00</span><span class="dur">2:55</span></div>
+    </article>
+
+    <article class="record reveal" data-src="audio/marine-drive-at-dusk.mp3" style="--label:var(--violet)">
+      <div class="rec-top">
+        <div class="disc-wrap"><div class="disc-ring"></div><button class="disc" aria-label="Play Marine Drive at Dusk"></button><div class="play-glyph">▶</div></div>
+        <div class="rec-meta"><h3>Marine Drive at Dusk</h3><p class="style">Bossa-Bollywood · flugelhorn, santoor &amp; string swells</p></div>
+      </div>
+      <div class="rec-tags"><span>instrumental</span><span>96 bpm</span><span>A minor</span><span class="gen">gen 3m 13s</span></div>
+      <div class="rec-time"><span class="cur">0:00</span><span class="dur">2:50</span></div>
+    </article>
+
+    <article class="record reveal" data-src="audio/lotus-lounge.mp3" style="--label:var(--leaf)">
+      <div class="rec-top">
+        <div class="disc-wrap"><div class="disc-ring"></div><button class="disc" aria-label="Play Lotus Lounge"></button><div class="play-glyph">▶</div></div>
+        <div class="rec-meta"><h3>Lotus Lounge</h3><p class="style">Late-night lounge · tanpura drone, piano trio, sparse bansuri</p></div>
+      </div>
+      <div class="rec-tags"><span>instrumental</span><span>64 bpm</span><span>G major</span><span class="gen">gen 3m 22s</span></div>
+      <div class="rec-time"><span class="cur">0:00</span><span class="dur">3:05</span></div>
+    </article>
+
+    <article class="record reveal" data-src="audio/raat-ki-rani.mp3" style="--label:var(--rose)">
+      <div class="rec-top">
+        <div class="disc-wrap"><div class="disc-ring"></div><button class="disc" aria-label="Play Raat Ki Rani"></button><div class="play-glyph">▶</div></div>
+        <div class="rec-meta"><h3>Raat Ki Rani <small>(House Mix)</small></h3><p class="style">Deep house · filmi strings, tabla-laced four-on-the-floor, female playback vocal</p></div>
+      </div>
+      <div class="rec-tags"><span>vocal · hindi</span><span>122 bpm</span><span>A minor</span><span class="gen">gen 2m 43s</span></div>
+      <p class="lyric-note">“Raat ki rani khil gayi, teri aankhon mein duniya mil gayi…” — original Hindi lyrics, written for this session.</p>
+      <div class="rec-time"><span class="cur">0:00</span><span class="dur">3:40</span></div>
+    </article>
+
+    <article class="record reveal" data-src="audio/sanje-gaali.mp3" style="--label:var(--marigold-deep)">
+      <div class="rec-top">
+        <div class="disc-wrap"><div class="disc-ring"></div><button class="disc" aria-label="Play Sanje Gaali"></button><div class="play-glyph">▶</div></div>
+        <div class="rec-meta"><h3>Sanje Gaali <small>(Retro 90s)</small></h3><p class="style">90s South-Indian film melody · male playback vocal, flute, veena, dholak</p></div>
+      </div>
+      <div class="rec-tags"><span>vocal · kannada</span><span>84 bpm</span><span>D major</span><span class="gen">gen 2m 58s</span></div>
+      <p class="lyric-note">“ಸಂಜೆ ಗಾಳಿ ಹಾಡಿದೆ, ಪ್ರೀತಿ ಕಥೆಯ ಹೇಳಿದೆ…” — original Kannada lyrics in native script.</p>
+      <div class="rec-time"><span class="cur">0:00</span><span class="dur">3:50</span></div>
+    </article>
+  </div>
+</section>
+
+<!-- ================= MODEL ================= -->
+<section id="model">
+  <div class="sec-head"><span class="sec-num">№ 02</span><h2>The model: a planner &amp; a painter</h2></div>
+  <p class="sec-sub">ACE-Step 1.5 (MIT license, ACE Studio × StepFun) is a hybrid: a language model composes, a diffusion model renders. That split is the whole trick.</p>
+
+  <div class="split">
+    <div class="prose">
+      <p class="lede">The <b>planner</b> is a 1.7-billion-parameter language model. It reads the text prompt — caption, lyric sheet with structure tags, tempo, key, duration — and writes the entire song as a sequence of <b>discrete audio tokens at 5 Hz</b>: five tokens per second of music, a compressed score covering melody, arrangement and vocal phrasing. On this Mac it runs through Apple's <b>MLX</b> framework, streaming roughly 900 tokens for a three-minute track.</p>
+      <p>The <b>painter</b> is a 2-billion-parameter diffusion transformer (the <code>turbo</code> variant). Conditioned on the planner's tokens, it starts from noise and refines the full track in just <b>8 denoising steps</b> — under a minute — before a VAE decodes the latent into a 48 kHz stereo waveform. Because the planner already fixed the structure, the painter doesn't iterate hundreds of times the way image diffusion does.</p>
+      <p>Vocals come free with the same machinery: lyrics are folded into the token plan, which is how one setup sang <b>original Hindi and Kannada lyrics</b> with zero fine-tuning. The model claims 50+ languages; pronunciation quality tracks training-data coverage, so rarer languages earn a skeptical first listen.</p>
+      <p>Why not the alternatives? <b>MusicGen</b> outputs are licensed non-commercial (CC BY-NC) and the quality ceiling is lower. <b>Suno/Udio/ElevenLabs</b> are strong but metered, cloud-bound APIs. ACE-Step 1.5 benchmarks between Suno v4.5 and v5 while running free on consumer hardware — the first time "good enough to actually listen to" and "runs on my laptop" have overlapped.</p>
+    </div>
+
+    <aside class="session-log reveal">
+      <span class="t">// measured on this machine</span>
+      <table>
+        <tr><td class="dim">hardware</td><td>Apple M5 · 32 GB unified</td></tr>
+        <tr><td class="dim">backend</td><td>MLX (Apple GPU)</td></tr>
+        <tr><td class="dim">weights on disk</td><td>9.4 GB · 28 files</td></tr>
+        <tr><td class="dim">planner (LM)</td><td>acestep-5Hz-lm-1.7B</td></tr>
+        <tr><td class="dim">painter (DiT)</td><td>acestep-v15-turbo · 2B</td></tr>
+        <tr><td class="dim">token rate, cold→warm</td><td>3.5 → 11.5 tok/s</td></tr>
+        <tr><td class="dim">tokens / 3-min track</td><td>~860–935</td></tr>
+        <tr><td class="dim">diffusion</td><td>8 steps · ~40–70 s</td></tr>
+        <tr><td class="dim">model load, cold→warm</td><td>371 s → 11 s</td></tr>
+        <tr><td class="dim">track, cold→warm</td><td>7 m → <span class="ok">~3 m</span></td></tr>
+        <tr><td class="dim">CPU during gen</td><td>~0% <span class="dim">(it's all GPU)</span></td></tr>
+      </table>
+    </aside>
+  </div>
+</section>
+
+<!-- ================= PIPELINE ================= -->
+<section id="pipeline">
+  <div class="sec-head"><span class="sec-num">№ 03</span><h2>The pipeline: prompt → Spotify</h2></div>
+  <p class="sec-sub">Five stages, all scriptable, all resumable. The same skeleton ships podcasts and music alike.</p>
+
+  <div class="split">
+    <div>
+      <ol class="flow">
+        <li><b>Define tracks as data</b>
+          <p>One JSON entry per song: caption (the sonic brief), lyric sheet with <code>[Verse]/[Chorus]</code> structure tags, bpm, key, duration, language. Captions read like a producer's notes — instruments, mood, era — not keywords.</p></li>
+        <li><b>Generate locally</b>
+          <p>A ~100-line script feeds each definition to ACE-Step (planner → painter → VAE) and drops one WAV per track, with <code>.done</code> markers so a crashed run resumes instead of regenerating.</p></li>
+        <li><b>Master with ffmpeg</b>
+          <p>Loudness-normalize each track to −14 LUFS, stitch with 2-second gaps, encode a single 256 kbps MP3. Cumulative durations become the chapter map.</p></li>
+        <li><b>Dress it</b>
+          <p>A timeline JSON marks each track's start (seekable chapters in Spotify's player); cover art is CDN base artwork composited with Pillow typography; show notes are timestamped single-line HTML.</p></li>
+        <li><b>Publish with save-to-spotify</b>
+          <p>Spotify's agent-era CLI (Go, OAuth in the browser once) uploads audio + cover + description to a personal show, pushes the chapter timeline, and polls until the episode is <code>READY</code> in your library — on every device.</p></li>
+      </ol>
+    </div>
+    <div>
+<pre class="code"><span class="c"># the whole flow, four commands</span>
+<span class="y">$</span> save-to-spotify auth login        <span class="c"># once</span>
+
+<span class="y">$</span> uv run python generate_tracks.py jazz-masala-vol1/
+<span class="g">TRACK_OK</span> 0 423.8s  monsoon-serenade.wav
+<span class="g">TRACK_OK</span> 1 186.0s  sitar-over-saxophone.wav
+<span class="g">TRACK_OK</span> 2 192.7s  marine-drive-at-dusk.wav
+<span class="g">TRACK_OK</span> 3 202.4s  lotus-lounge.wav
+
+<span class="y">$</span> save-to-spotify upload episode.mp3 \
+    --title <span class="g">"Jazz Masala - Vol. 1"</span> \
+    --show-id spotify:show:033vCmHA… \
+    --image cover.jpg --summary <span class="g">"$(cat notes.html)"</span>
+
+<span class="y">$</span> save-to-spotify timeline set \
+    --episode-id spotify:episode:2p3YLm… \
+    --from-file timeline.json
+<span class="c"># readiness: READY → it's in Your Library</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PM ================= -->
+<section id="pm">
+  <div class="sec-head"><span class="sec-num">№ 04</span><h2>What this means, if you ship product</h2></div>
+  <p class="sec-sub">The interesting part isn't one EP — it's where the cost and control curves just moved.</p>
+
+  <div class="cards">
+    <div class="card reveal"><div class="label">Cost structure</div><h3>Marginal cost is now zero</h3><p>After a one-time 9.4 GB download, every additional track is ~3 minutes of laptop GPU time. Iteration is free, so "generate ten, keep two" becomes the default creative motion — a different economics than $/generation APIs.</p></div>
+    <div class="card reveal"><div class="label">Latency &amp; locality</div><h3>Consumer hardware is enough</h3><p>Frontier-adjacent music quality (benchmarked between Suno v4.5 and v5) on a fanless-class machine, offline. Anything that works as a cloud demo and fits in 32 GB will show up on-device soon after.</p></div>
+    <div class="card reveal"><div class="label">Quality envelope</div><h3>Variance is the product problem</h3><p>Each generation is a fresh roll — same prompt, different song. There's no "tweak bar 17"; the edit button is regeneration (or stem-level repaint). Design flows around selection and curation, not fine control.</p></div>
+    <div class="card reveal"><div class="label">Rights &amp; scope</div><h3>Original-only, personal-first</h3><p>MIT-licensed model, original lyrics, original melodies — covers of real songs stay out of bounds. And save-to-spotify lands in a <em>personal</em> library, not the public catalog: distribution still goes through labels and distributors.</p></div>
+    <div class="card reveal"><div class="label">Localization</div><h3>Languages come almost free</h3><p>Hindi house and a 90s Kannada melody from the same checkpoint, no fine-tuning — multilingual singing is a prompt parameter now. Coverage and pronunciation quality vary; budget for human listen-checks per locale.</p></div>
+    <div class="card reveal"><div class="label">Agent-era APIs</div><h3>CLIs are the new SDKs</h3><p>save-to-spotify ships with JSON output, env-var auth and an agent skill file — designed for AI agents as first-class users. Expect more platform surface to look like this: scriptable, verifiable, headless.</p></div>
+  </div>
+</section>
+
+<!-- ================= NOTES ================= -->
+<section id="notes">
+  <div class="sec-head"><span class="sec-num">№ 05</span><h2>Field notes</h2></div>
+  <p class="sec-sub">The seams we actually hit, kept here so you don't have to rediscover them.</p>
+  <ul class="notes">
+    <li class="reveal"><span class="tag">downloads</span><p><b>Hugging Face pulls can stall silently.</b> Ours froze at 8.7 GB with zero error while another process shared the link. Fix: <code>HF_HUB_DOWNLOAD_TIMEOUT=30</code> and restart — transfers resume from disk.</p></li>
+    <li class="reveal"><span class="tag">model zoo</span><p><b>Read the checkpoint folder, not the docs.</b> The bundle ships the 1.7B planner; the 0.6B referenced in examples isn't included. First run failed until the script pointed at what was actually on disk.</p></li>
+    <li class="reveal"><span class="tag">observability</span><p><b>CPU 0% ≠ hung.</b> All compute is on the Apple GPU via MLX. The only honest signals are the token-rate and diffusion-step progress bars in the logs.</p></li>
+    <li class="reveal"><span class="tag">publishing</span><p><b>READY can flip to FAILED hours later.</b> One episode regressed after verifying READY — a backend flake. Delete, re-upload, re-push the timeline; keep all artifacts on disk so republish is one command.</p></li>
+    <li class="reveal"><span class="tag">api quirks</span><p><b>Trust reads, not writes.</b> <code>timeline set</code> returns an empty body on success, and companions propagate 60–90 s after READY. Verify with <code>timeline get</code>, never from the write response.</p></li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:0 28px">
+    <div>JAZZ MASALA · pressed June 2026 on one MacBook · produced in a <a href="https://claude.com/claude-code">Claude Code</a> session</div>
+    <div><a href="https://github.com/ace-step/ACE-Step-1.5">ACE-Step 1.5</a> · <a href="https://github.com/spotify/save-to-spotify">save-to-spotify</a> · all music AI-generated, original lyrics</div>
+  </div>
+</footer>
+
+<script>
+// ---- vinyl players: one playing at a time ----
+const records=[...document.querySelectorAll('.record')];
+let active=null;
+const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+records.forEach(rec=>{
+  const audio=new Audio();audio.preload='none';audio.src=rec.dataset.src;
+  const ring=rec.querySelector('.disc-ring'),cur=rec.querySelector('.cur'),dur=rec.querySelector('.dur');
+  audio.addEventListener('loadedmetadata',()=>dur.textContent=fmt(audio.duration));
+  audio.addEventListener('timeupdate',()=>{
+    cur.textContent=fmt(audio.currentTime);
+    ring.style.setProperty('--p',(audio.currentTime/audio.duration*100)||0);
+  });
+  audio.addEventListener('ended',()=>{rec.classList.remove('playing');ring.style.setProperty('--p',0);cur.textContent='0:00'});
+  rec.querySelector('.disc').addEventListener('click',()=>{
+    if(active&&active.audio!==audio){active.audio.pause();active.rec.classList.remove('playing')}
+    if(audio.paused){audio.play();rec.classList.add('playing');active={audio,rec}}
+    else{audio.pause();rec.classList.remove('playing')}
+  });
+});
+// ---- scroll reveals ----
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
